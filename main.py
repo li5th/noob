@@ -3,11 +3,30 @@ from bs4 import BeautifulSoup
 import time
 import random
 import os
+import requests
 
 # Load Ethereum addresses from file
 def load_addresses_from_file(filepath):
     with open(filepath, "r") as f:
         return [line.strip() for line in f if line.strip()]
+# Telegram bot settings
+BOT_TOKEN = '7997927855:AAGhQHFhmULHhr-cZV7K4lcGBTaDiFugqws'
+CHAT_ID = '759264436'
+
+def send_telegram_message(message):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        'chat_id': CHAT_ID,
+        'text': message
+    }
+    try:
+        response = requests.post(url, data=payload)
+        if response.status_code == 200:
+            print("Message sent successfully!")
+        else:
+            print(f"Failed to send message. Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 # Realistic User Agents
 USER_AGENTS = [
@@ -32,8 +51,7 @@ USER_AGENTS = [
 # Function to scrape number of addresses from Blockchair
 def get_number_of_addresses(address, client):
     url = f"https://blockchair.com/search?q={address}"
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_file = os.path.join(script_dir, "balances.txt")
+    
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -66,9 +84,7 @@ def get_number_of_addresses(address, client):
                     if num_addresses > 0:
                         result = f"{address} | Number of Addresses: {num_addresses}"
                         print(result)
-                        # Save non-zero balances to file
-                        with open(output_file, "a") as f:
-                            f.write(result + "\n")
+                        send_telegram_message(result)
                         return result
 
         # If no valid number of addresses found
